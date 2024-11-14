@@ -46,7 +46,7 @@ var headers_2 = require("next/headers");
 var endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 function POST(req) {
     return __awaiter(this, void 0, void 0, function () {
-        var body, sig, event, session, userId, supabase, existingUser, updateError, insertError, error_1;
+        var body, sig, event, session, userId, cookieStore_1, supabase, existingUser, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -54,71 +54,63 @@ function POST(req) {
                     return [4 /*yield*/, req.text()];
                 case 1:
                     body = _a.sent();
-                    sig = headers_1.headers().get('stripe-signature');
+                    sig = headers_1.headers().get("stripe-signature");
                     if (!sig || !endpointSecret) {
-                        return [2 /*return*/, server_1.NextResponse.json({ error: 'Missing stripe signature or webhook secret' }, { status: 400 })];
+                        return [2 /*return*/, server_1.NextResponse.json({ error: "Missing stripe signature or webhook secret" }, { status: 400 })];
                     }
                     event = void 0;
                     try {
                         event = stripe_1.stripe.webhooks.constructEvent(body, sig, endpointSecret);
                     }
                     catch (err) {
-                        console.error('Webhook signature verification failed:', err);
-                        return [2 /*return*/, server_1.NextResponse.json({ error: 'Invalid signature' }, { status: 400 })];
+                        return [2 /*return*/, server_1.NextResponse.json({ error: "Invalid signature" }, { status: 400 })];
                     }
-                    if (!(event.type === 'checkout.session.completed')) return [3 /*break*/, 6];
+                    if (!(event.type === "checkout.session.completed")) return [3 /*break*/, 6];
                     session = event.data.object;
                     userId = session.metadata.userId;
                     if (!userId) {
-                        throw new Error('No userId found in session metadata');
+                        throw new Error("No userId found in session metadata");
                     }
-                    supabase = auth_helpers_nextjs_1.createRouteHandlerClient({ cookies: headers_2.cookies });
+                    cookieStore_1 = headers_2.cookies();
+                    supabase = auth_helpers_nextjs_1.createRouteHandlerClient({ cookies: function () { return cookieStore_1; } });
                     return [4 /*yield*/, supabase
-                            .from('user_credits')
-                            .select('*')
-                            .eq('user_id', userId)
+                            .from("user_credits")
+                            .select("*")
+                            .eq("user_id", userId)
                             .single()];
                 case 2:
                     existingUser = (_a.sent()).data;
                     if (!existingUser) return [3 /*break*/, 4];
                     return [4 /*yield*/, supabase
-                            .from('user_credits')
+                            .from("user_credits")
                             .update({
                             credits_remaining: existingUser.credits_remaining + 200,
                             updated_at: new Date().toISOString()
                         })
-                            .eq('user_id', userId)];
+                            .eq("user_id", userId)];
                 case 3:
-                    updateError = (_a.sent()).error;
-                    if (updateError)
-                        throw updateError;
+                    _a.sent();
                     return [3 /*break*/, 6];
-                case 4: return [4 /*yield*/, supabase
-                        .from('user_credits')
-                        .insert([
+                case 4: return [4 /*yield*/, supabase.from("user_credits").insert([
                         {
                             user_id: userId,
                             credits_remaining: 200,
                             is_unlimited: false
-                        }
+                        },
                     ])];
                 case 5:
-                    insertError = (_a.sent()).error;
-                    if (insertError)
-                        throw insertError;
+                    _a.sent();
                     _a.label = 6;
                 case 6: return [2 /*return*/, server_1.NextResponse.json({ received: true })];
                 case 7:
                     error_1 = _a.sent();
-                    console.error('Error handling webhook:', error_1);
-                    return [2 /*return*/, server_1.NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })];
+                    return [2 /*return*/, server_1.NextResponse.json({ error: "Webhook handler failed" }, { status: 500 })];
                 case 8: return [2 /*return*/];
             }
         });
     });
 }
 exports.POST = POST;
-// Configure the endpoint to handle raw body
 exports.config = {
     api: {
         bodyParser: false
