@@ -3,7 +3,6 @@ import { getAuth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 
-// Make sure this price ID matches the one in your Stripe dashboard
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
 
 export async function POST(req: Request) {
@@ -20,16 +19,22 @@ export async function POST(req: Request) {
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          price: PRICE_ID, // Using the Price ID from Stripe
+          price: PRICE_ID,
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upload`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upload?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
       metadata: {
-        userId,
-        creditsToAdd: '200',
+        userId: userId,
+        creditsToAdd: '200', // Number of credits to add
+      },
+      payment_intent_data: {
+        metadata: {
+          userId: userId,
+          creditsToAdd: '200',
+        },
       },
     });
 
@@ -49,3 +54,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const dynamic = 'force-dynamic';
