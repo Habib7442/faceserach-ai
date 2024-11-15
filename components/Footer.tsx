@@ -35,7 +35,7 @@ const Footer = () => {
             <Link href="/" className="block">
               <div className="relative h-12 w-48">
                 <Image
-                  src="/logo.png"
+                  src="/logo-facesearch.jpeg"
                   alt="FaceSearch AI Logo"
                   fill
                   className="object-contain"

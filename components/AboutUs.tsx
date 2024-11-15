@@ -1,5 +1,6 @@
 import React from "react";
 import { GlobeIcon, SearchIcon, ShieldCheckIcon, UsersIcon } from "lucide-react";
+import ImageGridSection from "./ImageGridSection";
 // import Image from "next/image";
 
 const AboutUs = () => {
@@ -62,21 +63,7 @@ const AboutUs = () => {
               We understand the importance of connecting people in today&apos;s digital world. Whether you&apos;re looking to find someone&apos;s online presence or verify an identity, our technology makes it possible with just a single image or video.
             </p>
           </div>
-          <div className="relative h-96 rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl" />
-            <div className="absolute inset-1 bg-slate-900/90 rounded-2xl p-6 backdrop-blur-xl">
-              <div className="grid grid-cols-2 gap-4 h-full">
-                <div className="space-y-4">
-                  <div className="h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg" />
-                  <div className="h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-lg" />
-                </div>
-                <div className="space-y-4 pt-8">
-                  <div className="h-32 bg-gradient-to-br from-pink-500/10 to-blue-500/10 rounded-lg" />
-                  <div className="h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <ImageGridSection />
         </div>
       </div>
 

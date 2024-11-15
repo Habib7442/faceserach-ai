@@ -20,7 +20,7 @@ var Footer = function () {
                 React.createElement("div", { className: "space-y-4" },
                     React.createElement(link_1["default"], { href: "/", className: "block" },
                         React.createElement("div", { className: "relative h-12 w-48" },
-                            React.createElement(image_1["default"], { src: "/logo.png", alt: "FaceSearch AI Logo", fill: true, className: "object-contain" }))),
+                            React.createElement(image_1["default"], { src: "/logo-facesearch.jpeg", alt: "FaceSearch AI Logo", fill: true, className: "object-contain" }))),
                     React.createElement("p", { className: "text-slate-400 mt-4" }, "Revolutionizing face matching technology with advanced AI solutions for a more connected and secure future."),
                     React.createElement("div", { className: "flex space-x-4" },
                         React.createElement(link_1["default"], { href: "#", className: "hover:text-cyan-400 transition-colors" },
