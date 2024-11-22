@@ -46,16 +46,24 @@ export async function POST(req: Request) {
           creditsToAdd: plan.credits.toString(),
         },
       },
+      // Add these fields to ensure address collection for all plans
+      billing_address_collection: 'required', // Force address collection
+      customer_email: undefined, // Let Stripe collect email
+      payment_method_types: ['card'],
+      // Add specific requirements for Indian exports
+      customer_creation: 'always',
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'automatic'
+        }
+      }
     });
 
     if (!session.url) {
       throw new Error('Failed to create checkout session URL');
     }
 
-    console.log('Checkout session created:', {
-      sessionId: session.id,
-      metadata: session.metadata
-    });
+   
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
