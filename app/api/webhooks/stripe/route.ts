@@ -26,12 +26,55 @@ export async function POST(req: Request) {
       const session = event.data.object as any;
       const { userId, planId, creditsToAdd } = session.metadata;
 
+      if (!userId || !planId || !creditsToAdd) {
+        console.error('Missing required metadata:', { userId, planId, creditsToAdd });
+        throw new Error('Missing required metadata');
+      }
+
       const cookieStore = await cookies();
       const supabase = createRouteHandlerClient({ 
         cookies: () => cookieStore 
       });
 
-      // Update user's subscription info
+      // First, check if user exists in user_credits table
+      const { data: existingCredits, error: checkError } = await supabase
+        .from('user_credits')
+        .select('credits_remaining')
+        .eq('user_id', userId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing credits:', checkError);
+        throw checkError;
+      }
+
+      const currentCredits = existingCredits?.credits_remaining || 0;
+      const newTotalCredits = currentCredits + parseInt(creditsToAdd);
+
+      console.log('Credits calculation:', {
+        currentCredits,
+        creditsToAdd,
+        newTotalCredits,
+        userId
+      });
+
+      // Update or insert user credits
+      const { error: creditsError } = await supabase
+        .from('user_credits')
+        .upsert({
+          user_id: userId,
+          credits_remaining: newTotalCredits,
+          updated_at: new Date().toISOString(),
+          // If it's a new record, set created_at
+          ...((!existingCredits && { created_at: new Date().toISOString() }))
+        });
+
+      if (creditsError) {
+        console.error('Error updating credits:', creditsError);
+        throw creditsError;
+      }
+
+      // Update subscription status
       const { error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .upsert({
@@ -47,42 +90,24 @@ export async function POST(req: Request) {
         throw subscriptionError;
       }
 
-      // Update credits
-      const { data: currentCredits, error: fetchError } = await supabase
-        .from('user_credits')
-        .select('credits_remaining')
-        .eq('user_id', userId)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error fetching current credits:', fetchError);
-        throw fetchError;
-      }
-
-      const newTotal = (currentCredits?.credits_remaining || 0) + parseInt(creditsToAdd);
-
-      const { error: updateError } = await supabase
-        .from('user_credits')
-        .upsert({ 
-          user_id: userId,
-          credits_remaining: newTotal,
-          updated_at: new Date().toISOString()
-        });
-
-      if (updateError) {
-        console.error('Error updating credits:', updateError);
-        throw updateError;
-      }
-
-      console.log(`Successfully updated plan and credits for user ${userId}`);
+      console.log(`Successfully updated plan and credits for user ${userId}:`, {
+        planId,
+        newTotalCredits
+      });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
+    // Send more detailed error information
     return NextResponse.json(
-      { error: 'Webhook handler failed' },
+      { 
+        error: 'Webhook handler failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
 }
+
+export const dynamic = 'force-dynamic';

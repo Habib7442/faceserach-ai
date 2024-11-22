@@ -32,9 +32,20 @@ const Upload = () => {
     }
   };
 
-  const handleUpgradeClick = async () => {
-    
-  };
+  // const handleUpgradeClick = async () => {
+  //   try {
+  //     const response = await fetch('/api/create-checkout-session', {
+  //       method: 'POST',
+  //     });
+  //     const data = await response.json();
+  //     if (data.url) {
+  //       window.location.href = data.url;
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating checkout session:', error);
+  //     toast.error('Failed to start checkout process');
+  //   }
+  // };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
