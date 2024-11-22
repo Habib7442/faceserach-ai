@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       ],
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upload`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment`,
       metadata: {
         userId: userId,
         planId: plan.id,
