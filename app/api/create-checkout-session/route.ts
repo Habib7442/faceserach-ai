@@ -18,12 +18,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 });
     }
 
-    // For enterprise plan, redirect to contact page
-    // if (plan.id === 'enterprise') {
-    //   return NextResponse.json({ 
-    //     url: `${process.env.NEXT_PUBLIC_APP_URL}/contact` 
-    //   });
-    // }
+    console.log('Creating checkout session with plan:', {
+      planId: plan.id,
+      credits: plan.credits,
+      userId
+    });
 
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -52,6 +51,11 @@ export async function POST(req: Request) {
     if (!session.url) {
       throw new Error('Failed to create checkout session URL');
     }
+
+    console.log('Checkout session created:', {
+      sessionId: session.id,
+      metadata: session.metadata
+    });
 
     return NextResponse.json({ url: session.url });
   } catch (error) {

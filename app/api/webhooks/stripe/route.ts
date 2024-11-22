@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
+    console.log('Webhook received');
     const body = await req.text();
     const signature = headers().get('stripe-signature')!;
 
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
+      console.log('Event type:', event.type);
     } catch (err) {
       console.error('Webhook signature verification failed:', err);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -24,7 +26,10 @@ export async function POST(req: Request) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
+      console.log('Session metadata:', session.metadata);
+      
       const { userId, planId, creditsToAdd } = session.metadata;
+      console.log('Extracted data:', { userId, planId, creditsToAdd });
 
       if (!userId || !planId || !creditsToAdd) {
         console.error('Missing required metadata:', { userId, planId, creditsToAdd });
@@ -36,12 +41,16 @@ export async function POST(req: Request) {
         cookies: () => cookieStore 
       });
 
+      console.log('Checking existing credits for user:', userId);
+      
       // First, check if user exists in user_credits table
       const { data: existingCredits, error: checkError } = await supabase
         .from('user_credits')
-        .select('credits_remaining')
+        .select('*')  // Select all fields to see full record
         .eq('user_id', userId)
         .single();
+
+      console.log('Existing credits query result:', { existingCredits, checkError });
 
       if (checkError && checkError.code !== 'PGRST116') {
         console.error('Error checking existing credits:', checkError);
@@ -58,23 +67,53 @@ export async function POST(req: Request) {
         userId
       });
 
-      // Update or insert user credits
-      const { error: creditsError } = await supabase
-        .from('user_credits')
-        .upsert({
-          user_id: userId,
-          credits_remaining: newTotalCredits,
-          updated_at: new Date().toISOString(),
-          // If it's a new record, set created_at
-          ...((!existingCredits && { created_at: new Date().toISOString() }))
-        });
+      // Try inserting first if user doesn't exist
+      if (!existingCredits) {
+        console.log('Attempting to create new user_credits record');
+        const { error: insertError } = await supabase
+          .from('user_credits')
+          .insert([{
+            user_id: userId,
+            credits_remaining: parseInt(creditsToAdd),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
 
-      if (creditsError) {
-        console.error('Error updating credits:', creditsError);
-        throw creditsError;
+        if (insertError) {
+          console.error('Error inserting new credits:', insertError);
+          throw insertError;
+        }
+      } else {
+        // Update existing record
+        console.log('Attempting to update existing user_credits record');
+        const { error: updateError } = await supabase
+          .from('user_credits')
+          .update({
+            credits_remaining: newTotalCredits,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('Error updating credits:', updateError);
+          throw updateError;
+        }
       }
 
+      // Verify the update
+      const { data: verifyCredits, error: verifyError } = await supabase
+        .from('user_credits')
+        .select('credits_remaining')
+        .eq('user_id', userId)
+        .single();
+
+      console.log('Verification of credits update:', {
+        verifyCredits,
+        verifyError
+      });
+
       // Update subscription status
+      console.log('Updating subscription status');
       const { error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .upsert({
@@ -90,16 +129,16 @@ export async function POST(req: Request) {
         throw subscriptionError;
       }
 
-      console.log(`Successfully updated plan and credits for user ${userId}:`, {
+      console.log(`Successfully completed all operations for user ${userId}:`, {
         planId,
-        newTotalCredits
+        newTotalCredits,
+        finalCredits: verifyCredits?.credits_remaining
       });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    // Send more detailed error information
     return NextResponse.json(
       { 
         error: 'Webhook handler failed',
