@@ -16,6 +16,7 @@ const Upload = () => {
   const [dragActive, setDragActive] = useState(false);
   const [userCredits, setUserCredits] = useState<UserCredits | null>(null);
 
+
   useEffect(() => {
     checkCredits();
   }, []);
@@ -32,18 +33,7 @@ const Upload = () => {
   };
 
   const handleUpgradeClick = async () => {
-    try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error('Failed to start checkout process');
-    }
+    
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,14 +113,16 @@ const Upload = () => {
               )}
             </div>
           </div>
-          {!userCredits?.is_unlimited && (
+          {userCredits?.credits_remaining === 0 && (
+            <Link href="/payment">
             <Button
               onClick={handleUpgradeClick}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               <CreditCard className="mr-2 h-4 w-4" />
-              Upgrade to Unlimited
+              Upgrade
             </Button>
+            </Link>
           )}
         </div>
         {/* Top Navigation */}

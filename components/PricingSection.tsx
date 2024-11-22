@@ -1,10 +1,17 @@
-import React from "react";
-import { Check, Star, Zap } from "lucide-react";
+"use client"
+import { Check, Star, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/nextjs";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const PricingSection = () => {
+  const { isSignedIn, isLoaded } = useAuth();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   const pricingPlans = [
     {
+      id: "basic",
       name: "Basic",
       price: "$9.99",
       period: "month",
@@ -14,12 +21,14 @@ const PricingSection = () => {
         "Basic web search results",
         "Email support",
         "Export search history",
-        "Standard API access"
+        "Standard API access",
       ],
       highlighted: false,
-      buttonText: "Get Started"
+      buttonText: "Get Started",
+      stripePriceId: "price_1QNsUeSABw0Heq1mTI8fY0jE", 
     },
     {
+      id: "pro",
       name: "Pro",
       price: "$24.99",
       period: "month",
@@ -31,13 +40,15 @@ const PricingSection = () => {
         "Contact information finder",
         "Custom poem generation",
         "Advanced API access",
-        "Bulk search capability"
+        "Bulk search capability",
       ],
       highlighted: true,
       buttonText: "Try Pro Plan",
-      badge: "Most Popular"
+      badge: "Most Popular",
+      stripePriceId: "price_1QNsWGSABw0Heq1mCNToLIF2", 
     },
     {
+      id: "enterprise",
       name: "Enterprise",
       price: "Custom",
       period: "month",
@@ -49,12 +60,52 @@ const PricingSection = () => {
         "Advanced analytics",
         "White-label option",
         "Enterprise API access",
-        "Custom feature development"
+        "Custom feature development",
       ],
       highlighted: false,
-      buttonText: "Contact Sales"
-    }
+      buttonText: "Contact Sales",
+      stripePriceId: "price_1QNsYkSABw0Heq1mPMQtOsBB", 
+    },
   ];
+
+  const handlePurchase = async (plan: (typeof pricingPlans)[0]) => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      toast("You need to be signed in to purchase a plan");
+      return;
+    }
+
+    try {
+      setLoadingPlan(plan.id);
+
+      // For enterprise plan, redirect to contact page
+      // if (plan.id === "enterprise") {
+      //   window.location.href = "/contact";
+      //   return;
+      // }
+
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: plan.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Purchase error:", error);
+      toast("Failed to initiate checkout. Please try again.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 py-20 px-4">
@@ -71,15 +122,16 @@ const PricingSection = () => {
             Choose Your Plan
           </h2>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto">
-            Select the perfect plan that suits your needs and unlock the full potential of FaceSearch AI
+            Select the perfect plan that suits your needs and unlock the full
+            potential of FaceSearch AI
           </p>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {pricingPlans.map((plan, index) => (
+          {pricingPlans.map((plan) => (
             <div
-              key={index}
+              key={plan.id}
               className={`relative rounded-2xl backdrop-blur-xl border transition-all duration-300 hover:scale-105
                 ${
                   plan.highlighted
@@ -100,9 +152,13 @@ const PricingSection = () => {
 
               {/* Card Content */}
               <div className="p-8">
-                <h3 className="text-2xl font-bold text-white mb-4">{plan.name}</h3>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  {plan.name}
+                </h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  <span className="text-4xl font-bold text-white">
+                    {plan.price}
+                  </span>
                   {plan.price !== "Custom" && (
                     <span className="text-slate-400">/{plan.period}</span>
                   )}
@@ -110,14 +166,25 @@ const PricingSection = () => {
                 <p className="text-slate-400 mb-6">{plan.description}</p>
 
                 <Button
+                  onClick={() => handlePurchase(plan)}
+                  disabled={loadingPlan === plan.id || !isLoaded}
                   className={`w-full mb-8 ${
                     plan.highlighted
                       ? "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-200"
                   }`}
                 >
-                  {plan.buttonText}
-                  {plan.highlighted && <Zap className="w-4 h-4 ml-2" />}
+                  {loadingPlan === plan.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {plan.buttonText}
+                      {plan.highlighted && <Zap className="w-4 h-4 ml-2" />}
+                    </>
+                  )}
                 </Button>
 
                 <div className="space-y-4">

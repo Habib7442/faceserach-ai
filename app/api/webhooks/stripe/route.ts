@@ -1,11 +1,8 @@
-// app/api/webhooks/stripe/route.ts
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +15,7 @@ export async function POST(req: Request) {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        webhookSecret
+        process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err) {
       console.error('Webhook signature verification failed:', err);
@@ -27,44 +24,57 @@ export async function POST(req: Request) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
-      const { userId, creditsToAdd } = session.metadata;
+      const { userId, planId, creditsToAdd } = session.metadata;
 
-      // Get cookie store and create Supabase client
       const cookieStore = await cookies();
       const supabase = createRouteHandlerClient({ 
         cookies: () => cookieStore 
       });
 
-      // First get current credits
+      // Update user's subscription info
+      const { error: subscriptionError } = await supabase
+        .from('user_subscriptions')
+        .upsert({
+          user_id: userId,
+          plan_id: planId,
+          status: 'active',
+          started_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (subscriptionError) {
+        console.error('Error updating subscription:', subscriptionError);
+        throw subscriptionError;
+      }
+
+      // Update credits
       const { data: currentCredits, error: fetchError } = await supabase
         .from('user_credits')
         .select('credits_remaining')
         .eq('user_id', userId)
         .single();
 
-      if (fetchError) {
+      if (fetchError && fetchError.code !== 'PGRST116') {
         console.error('Error fetching current credits:', fetchError);
         throw fetchError;
       }
 
-      // Calculate new credits total
       const newTotal = (currentCredits?.credits_remaining || 0) + parseInt(creditsToAdd);
 
-      // Update credits in Supabase
       const { error: updateError } = await supabase
         .from('user_credits')
-        .update({ 
+        .upsert({ 
+          user_id: userId,
           credits_remaining: newTotal,
           updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+        });
 
       if (updateError) {
         console.error('Error updating credits:', updateError);
         throw updateError;
       }
 
-      console.log(`Successfully updated credits for user ${userId} to ${newTotal}`);
+      console.log(`Successfully updated plan and credits for user ${userId}`);
     }
 
     return NextResponse.json({ received: true });
@@ -76,5 +86,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-export const dynamic = 'force-dynamic';

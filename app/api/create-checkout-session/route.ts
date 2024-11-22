@@ -1,9 +1,7 @@
-// app/api/create-checkout-session/route.ts
 import { getAuth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-
-const PRICE_ID = process.env.STRIPE_PRICE_ID;
+import { PRICING_PLANS } from '@/config/plans';
 
 export async function POST(req: Request) {
   try {
@@ -12,28 +10,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!PRICE_ID) {
-      throw new Error('STRIPE_PRICE_ID is not configured in environment variables');
+    const body = await req.json();
+    const { planId } = body;
+
+    const plan = PRICING_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 });
     }
+
+    // For enterprise plan, redirect to contact page
+    // if (plan.id === 'enterprise') {
+    //   return NextResponse.json({ 
+    //     url: `${process.env.NEXT_PUBLIC_APP_URL}/contact` 
+    //   });
+    // }
 
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          price: PRICE_ID,
+          price: plan.stripePriceId,
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upload?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upload`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
       metadata: {
         userId: userId,
-        creditsToAdd: '200', // Number of credits to add
+        planId: plan.id,
+        creditsToAdd: plan.credits.toString(),
       },
       payment_intent_data: {
         metadata: {
           userId: userId,
-          creditsToAdd: '200',
+          planId: plan.id,
+          creditsToAdd: plan.credits.toString(),
         },
       },
     });
@@ -54,5 +65,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-export const dynamic = 'force-dynamic';
