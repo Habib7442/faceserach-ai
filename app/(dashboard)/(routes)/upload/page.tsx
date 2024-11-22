@@ -127,7 +127,6 @@ const Upload = () => {
           {userCredits?.credits_remaining === 0 && (
             <Link href="/payment">
             <Button
-              onClick={handleUpgradeClick}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               <CreditCard className="mr-2 h-4 w-4" />
