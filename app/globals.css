@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Gupter:wght@400;500;700&family=Kalnia+Glaze:wght@100..700&family=Lalezar&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Gupter:wght@400;500;700&family=Kalnia+Glaze:wght@100..700&family=Lalezar&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -73,7 +73,8 @@ body {
 }
 
 @keyframes gradient-x {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -95,4 +96,9 @@ body {
 
 html.dark {
   color-scheme: dark;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8ceaef #1a1a1a;
 }
