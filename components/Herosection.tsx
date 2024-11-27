@@ -12,7 +12,7 @@ const Herosection = () => {
 
   return (
     <div className="relative overflow-hidden">
-      {/* Multiple Spotlights for Depth */}
+      
       <div className="absolute inset-0 pointer-events-none">
         <Spotlight
           className="-top-40 -left-10 md:-left-32 md:-top-20 h-screen opacity-30 rotate-45"

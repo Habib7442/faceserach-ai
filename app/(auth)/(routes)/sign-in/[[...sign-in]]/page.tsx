@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignIn } from "@clerk/nextjs";
 import Image from "next/image";
 
 export default function Page() {
@@ -19,10 +19,11 @@ export default function Page() {
 
       {/* SignIn Content */}
       <div className="relative z-10 text-center space-y-6 p-8 bg-slate-800/50 backdrop-blur-sm rounded-xl">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-100 to-slate-300 drop-shadow-lg">
-          Sign Up to FaceSearch AI
-        </h1>
-        <SignUp />
+        {/* <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-100 to-slate-300 drop-shadow-lg">
+          Sign In to FaceSearch AI
+        </h1> */}
+        <SignIn />
+        
       </div>
     </div>
   );

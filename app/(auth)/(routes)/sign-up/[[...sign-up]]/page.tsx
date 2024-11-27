@@ -1,9 +1,9 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs";
 import Image from "next/image";
 
 export default function Page() {
   return (
-    <div className="relative w-full h-screen flex justify-center items-center">
+    <div className="relative w-full h-full p-4 flex justify-center items-center">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <Image
@@ -19,11 +19,10 @@ export default function Page() {
 
       {/* SignIn Content */}
       <div className="relative z-10 text-center space-y-6 p-8 bg-slate-800/50 backdrop-blur-sm rounded-xl">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-100 to-slate-300 drop-shadow-lg">
-          Sign In to FaceSearch AI
-        </h1>
-        <SignIn />
-        
+        {/* <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-100 to-slate-300 drop-shadow-lg">
+          Sign Up to FaceSearch AI
+        </h1> */}
+        <SignUp />
       </div>
     </div>
   );
