@@ -112,7 +112,7 @@ const Upload = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 text-slate-200 py-10 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto mt-14">
          {/* Credits Display */}
           <div className="mb-8 flex justify-between items-center bg-slate-800/50 backdrop-blur-sm p-4 rounded-xl border border-slate-700/50">
           <div className="flex items-center space-x-4">

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "./provider";
+import Navbar from "@/components/navigation/Navbar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,11 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
-      lang="en" 
-      suppressHydrationWarning 
-      // Remove style={{color-scheme:"dark"}}
-    >
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative dark:bg-black dark:text-white`}
       >
@@ -42,7 +39,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ClerkProvider>
-            <main>{children}</main>
+            <main>
+              <Navbar />
+              {children}
+            </main>
             <Toaster />
           </ClerkProvider>
         </ThemeProvider>
